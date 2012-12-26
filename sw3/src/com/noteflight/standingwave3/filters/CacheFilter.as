@@ -33,8 +33,8 @@ package com.noteflight.standingwave3.filters
     	// This is the maximum amount of data a cache will hold
     	// The cache will not increase in size beyond this number of frames
     	
-    	public static var MAX_CACHE:Number = 65536; // 64k frames ~= 1.5 sec
-    	public static var INITIAL_SIZE:Number = 65536;
+    	public static var MAX_CACHE:Number = 256000; //
+    	public static var INITIAL_SIZE:Number = 65536; //64k frames ~= 1.5 sec
     	
     	/** The maximum number of frames the cache will ever cache or grow to */
     	public var maxFrameCount:Number = MAX_CACHE;
@@ -45,7 +45,7 @@ package com.noteflight.standingwave3.filters
     	/** A boolean representing whether a cache is allowed to grow or not.
     	 * Reallocating sample memory during playback can cause major problems
     	 * so be careful with this. Defaults to false. */
-    	public var resizable:Boolean = false; 
+    	public var resizable:Boolean = true; 
     	
         private var _cache:Sample;
         private var _position:Number;

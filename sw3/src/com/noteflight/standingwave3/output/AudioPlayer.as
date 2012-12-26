@@ -38,6 +38,8 @@ package com.noteflight.standingwave3.output
      */
     public class AudioPlayer extends EventDispatcher
     {
+		
+		public var preset:String;
 
         // The sound being output
         private var _sound:Sound;

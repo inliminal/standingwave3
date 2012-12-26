@@ -1,4 +1,4 @@
-package com.noteflight.instruments
+package com.noteflight.standingwave3.sources
 {
     import com.noteflight.standingwave3.elements.*;
     import com.noteflight.standingwave3.modulation.*;
@@ -171,10 +171,14 @@ package com.noteflight.instruments
             rslt.endFrame = endFrame;
             rslt.frequencyShift = frequencyShift;
             rslt.resetPosition();
+			rslt.pitchModulations = pitchModulations;
+			rslt._realizedModulations = _realizedModulations;
+			rslt._pitchModulationData = _pitchModulationData;
             
-            // Figure out if we need to clone modulations
-            // FOr now, clones have empty modulations
-            
+			
+			// Yes, did in this extended class. (Well copied, plan to refactor it);
+            // "Figure out if we need to clone modulations
+            // FOr now, clones have empty modulations"
             return rslt;
         }
         
