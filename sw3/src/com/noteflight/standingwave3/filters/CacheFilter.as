@@ -33,7 +33,7 @@ package com.noteflight.standingwave3.filters
     	// This is the maximum amount of data a cache will hold
     	// The cache will not increase in size beyond this number of frames
     	
-    	public static var MAX_CACHE:Number = 256000; //
+    	public static var MAX_CACHE:Number = 524288; //
     	public static var INITIAL_SIZE:Number = 65536; //64k frames ~= 1.5 sec
     	
     	/** The maximum number of frames the cache will ever cache or grow to */

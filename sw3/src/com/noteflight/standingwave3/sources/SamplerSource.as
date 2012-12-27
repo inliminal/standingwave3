@@ -174,11 +174,6 @@ package com.noteflight.standingwave3.sources
 			rslt.pitchModulations = pitchModulations;
 			rslt._realizedModulations = _realizedModulations;
 			rslt._pitchModulationData = _pitchModulationData;
-            
-			
-			// Yes, did in this extended class. (Well copied, plan to refactor it);
-            // "Figure out if we need to clone modulations
-            // FOr now, clones have empty modulations"
             return rslt;
         }
         
