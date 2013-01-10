@@ -76,7 +76,7 @@ package com.noteflight.standingwave3.elements
         {
         	if (!_awave) {
         		// Creates the Alchemy C Lib when you first need a Sample
-        		Sample.initAlchemicalWaveSingleton();
+        		initAlchemicalWaveSingleton();
         	}
         	// trace("New sample " + numFrames);
             this._descriptor = descriptor;
@@ -98,8 +98,9 @@ package com.noteflight.standingwave3.elements
             
             // If a pool-sourced buffer was not available, then allocate new memory
             if (this._samplePointer == 0) {
-              this._samplePointer = Sample.allocateSampleMemory(numFrames, descriptor.channels, zero);
+              this._samplePointer = allocateSampleMemory(numFrames, descriptor.channels, zero);
             }
+
             _position = 0; 
             
            
@@ -107,7 +108,7 @@ package com.noteflight.standingwave3.elements
         }
 
         public static function allocateSampleMemory(numFrames:Number, channels:Number, zero:Boolean = false):uint {
-            var pointer:uint =  Sample._awave.allocateSampleMemory(numFrames, channels, zero ? 1 : 0);
+            var pointer:uint =  _awave.allocateSampleMemory(numFrames, channels, zero ? 1 : 0);
             if(pointer == 0) {
                 throw new Error("Unable to allocate memory")
             } else {
@@ -128,9 +129,9 @@ package com.noteflight.standingwave3.elements
         private static function initAlchemicalWaveSingleton():void {
         	var oldTime:Number = getTimer();
         	var loader:CLibInit = new CLibInit();   
-			Sample._awave = loader.init();
-			Sample._awaveMemory = (ns::gstate).ds; //point to memory
-			Sample._pool = new MemoryPool(Sample._awave);
+			_awave = loader.init();
+			_awaveMemory = (ns::gstate).ds; //point to memory
+			_pool = new MemoryPool(_awave);
 			var delta:Number = getTimer() - oldTime;
 			// trace("Started audio engine ... " + delta + " ms");
         }
@@ -145,7 +146,7 @@ package com.noteflight.standingwave3.elements
         	if (numFrames < frameCount) {
         		return;
         	} else {
-        		_samplePointer = Sample._awave.reallocateSampleMemory(frameCount, numFrames, descriptor.channels);
+        		_samplePointer = _awave.reallocateSampleMemory(frameCount, numFrames, descriptor.channels);
         		_frames = numFrames;
         		invalidateChannelData();
         	}
@@ -174,7 +175,7 @@ package com.noteflight.standingwave3.elements
          */
         public function clear():void
         {
-            Sample._awave.setSamples(getSamplePointer(), _descriptor.channels, _frames, 0.0);
+            _awave.setSamples(getSamplePointer(), _descriptor.channels, _frames, 0.0);
             invalidateChannelData();
         }    
         
@@ -227,7 +228,7 @@ package com.noteflight.standingwave3.elements
             var returnSample:Sample = new Sample(descriptor, numFrames);
             var returnSamplePointer:uint = returnSample.getSamplePointer(0);
             var thisSamplePointer:uint = getSamplePointer(fromOffset);
-            Sample._awave.mixIn(returnSamplePointer, thisSamplePointer, _descriptor.channels, numFrames, 1.0, 1.0);
+            _awave.mixIn(returnSamplePointer, thisSamplePointer, _descriptor.channels, numFrames, 1.0, 1.0);
             return returnSample;
         }
 
@@ -439,7 +440,7 @@ package com.noteflight.standingwave3.elements
          */
         public function setSamples(value:Number, targetOffset:Number, numFrames:Number):void 
         {
-            Sample._awave.setSamples(getSamplePointer(targetOffset), _descriptor.channels, numFrames, value);   
+            _awave.setSamples(getSamplePointer(targetOffset), _descriptor.channels, numFrames, value);   
             invalidateChannelData();
         }   
         
@@ -477,7 +478,7 @@ package com.noteflight.standingwave3.elements
 			mixSamplePointer = source.getSamplePointer(sourceOffset); // mix from this position
 			numFrames = Math.min(numFrames, _frames - targetOffset); // don't mix more frames than are left in our target 
 			numFrames = Math.min(numFrames, source.frameCount - sourceOffset); // and don't mix more than are left in our source
-			Sample._awave.mixIn(thisSamplePointer, mixSamplePointer, _descriptor.channels, Math.floor(numFrames), gain, gain);  
+			_awave.mixIn(thisSamplePointer, mixSamplePointer, _descriptor.channels, Math.floor(numFrames), gain, gain);  
 			invalidateChannelData();
        } 
        
@@ -520,7 +521,7 @@ package com.noteflight.standingwave3.elements
 			mixSamplePointer = source.getSamplePointer(sourceOffset); // mix from this position
 			numFrames = Math.min(numFrames, _frames - targetOffset); // don't mix more frames than are left in our target 
 			numFrames = Math.min(numFrames, source.frameCount - sourceOffset); // and don't mix more than are left in our source
-			Sample._awave.mixInPan(thisSamplePointer, mixSamplePointer, Math.floor(numFrames), leftGain, rightGain);  
+			_awave.mixInPan(thisSamplePointer, mixSamplePointer, Math.floor(numFrames), leftGain, rightGain);  
 			invalidateChannelData();
        } 
        
@@ -532,7 +533,7 @@ package com.noteflight.standingwave3.elements
         	if (numFrames < 0) {
         		numFrames = _frames; // if unspecified, mix into the entire sample
         	} 
-       		Sample._awave.envelope(getSamplePointer(offset), _descriptor.channels, numFrames, mp); 
+       		_awave.envelope(getSamplePointer(offset), _descriptor.channels, numFrames, mp); 
        		invalidateChannelData();
        } 
         
@@ -571,7 +572,7 @@ package com.noteflight.standingwave3.elements
 			mixSamplePointer = source.getSamplePointer(sourceOffset); // mix from this position
 			numFrames = Math.min(numFrames, _frames - targetOffset); // don't mix more frames than are left in our target 
 			numFrames = Math.min(numFrames, source.frameCount - sourceOffset); // and don't mix more than are left in our source
-			Sample._awave.multiplyIn(thisSamplePointer, mixSamplePointer, _descriptor.channels, Math.floor(numFrames), gain, gain );  
+			_awave.multiplyIn(thisSamplePointer, mixSamplePointer, _descriptor.channels, Math.floor(numFrames), gain, gain );  
 			invalidateChannelData();
        }
        
@@ -623,7 +624,7 @@ package com.noteflight.standingwave3.elements
 			var settings:Object = {tableSize:tableSize, phase:initialPhase, phaseAdd:phaseAdd, phaseReset:phaseReset,
 			     y1: pitchMod.y1, y2: pitchMod.y2 };
 			
-        	Sample._awave.wavetableIn(thisSamplePointer, tableSamplePointer, _descriptor.channels, Math.floor(numFrames), settings );
+        	_awave.wavetableIn(thisSamplePointer, tableSamplePointer, _descriptor.channels, Math.floor(numFrames), settings );
         	
         	invalidateChannelData();  
         	return settings.phase;  
@@ -667,7 +668,7 @@ package com.noteflight.standingwave3.elements
         	var phase:Number = sourceOffset / source.frameCount; // phase = fractional progress through the source
         	var phaseAdd:Number = factor / source.frameCount;
         	var settings:Object = {tableSize:tableSize, phase:phase, phaseAdd:phaseAdd, phaseReset:0, y1:0, y2:0};
-        	Sample._awave.wavetableIn(thisSamplePointer, tableSamplePointer, _descriptor.channels, Math.floor(numFrames), settings );        	
+        	_awave.wavetableIn(thisSamplePointer, tableSamplePointer, _descriptor.channels, Math.floor(numFrames), settings );        	
         	invalidateChannelData();
         }
         
@@ -692,7 +693,7 @@ package com.noteflight.standingwave3.elements
         		dryMix: dryMix,     
         		wetMix: wetMix, 
         		feedback: feedback};        	 
-       		Sample._awave.delay(getSamplePointer(), ringBuffer.getSamplePointer(), _descriptor.channels, int(_frames), settings); 
+       		_awave.delay(getSamplePointer(), ringBuffer.getSamplePointer(), _descriptor.channels, int(_frames), settings); 
        		
        		// Note that the delay() method has also now shifted the data in the ring buffer, if you're looking...
        		
@@ -713,7 +714,7 @@ package com.noteflight.standingwave3.elements
         	if (rightGain < 0) {
         		rightGain = leftGain;
         	}
-        	Sample._awave.changeGain(getSamplePointer(0), _descriptor.channels, _frames, leftGain, rightGain);
+        	_awave.changeGain(getSamplePointer(0), _descriptor.channels, _frames, leftGain, rightGain);
         	invalidateChannelData();
         }
         
@@ -722,7 +723,7 @@ package com.noteflight.standingwave3.elements
         	if (_awaveMemoryinvalid) {
         		commitChannelData();
         	}
-        	Sample._awave.normalize(getSamplePointer(0), _descriptor.channels, _frames, maxLevel); 
+        	_awave.normalize(getSamplePointer(0), _descriptor.channels, _frames, maxLevel); 
         	invalidateChannelData();
         }
         
@@ -739,7 +740,7 @@ package com.noteflight.standingwave3.elements
         	if (_awaveMemoryinvalid) {
         		commitChannelData();
         	}
-        	Sample._awave.biquad(getSamplePointer(), state.getSamplePointer(), _descriptor.channels, _frames, coeffs);
+        	_awave.biquad(getSamplePointer(), state.getSamplePointer(), _descriptor.channels, _frames, coeffs);
         	invalidateChannelData(); 	
         }  
      
@@ -763,9 +764,9 @@ package com.noteflight.standingwave3.elements
         		if (_descriptor.rate == AudioDescriptor.RATE_22050) {
         			_frames *= 2;
         		}  
-			      var newSample:uint = Sample.allocateSampleMemory(_frames, 2);
-        		Sample._awave.standardize(newSample, _samplePointer,  _descriptor.channels, _frames, _descriptor.rate);	
-        		Sample._awave.deallocateSampleMemory(_samplePointer);
+			      var newSample:uint = allocateSampleMemory(_frames, 2);
+        		_awave.standardize(newSample, _samplePointer,  _descriptor.channels, _frames, _descriptor.rate);	
+        		_awave.deallocateSampleMemory(_samplePointer);
         		_samplePointer = newSample;
         		_descriptor = new AudioDescriptor(AudioDescriptor.RATE_44100, AudioDescriptor.CHANNELS_STEREO);
         		_channelData = [];  // and a descriptor change has invalidated our channelData entirely
@@ -833,13 +834,15 @@ package com.noteflight.standingwave3.elements
          */ 
         public function writeBytes(destBytes:ByteArray, offset:Number=0, numFrames:Number=-1):void 
         {
-        	if (numFrames < 0) {
+        	var bytes:ByteArray;
+			
+			if (numFrames < 0) {
         		numFrames = _frames; // if unspecified, write the whole sample
         	}
-        	// Awave memory is littleEndian, and the sampleEvent handler is bigEndian
-        	// If we just adjust its littleEndianess, then we can use the Clib func to bang all the bytes in fast
-        	destBytes.endian = "littleEndian";
-        	Sample._awave.writeBytes(getSamplePointer(offset), destBytes, _descriptor.channels, numFrames);
+			// Awave memory is littleEndian, and the sampleEvent handler is bigEndian
+			// If we just adjust its littleEndianess, then we can use the Clib func to bang all the bytes in fast
+			destBytes.endian = "littleEndian";
+			_awave.writeBytes(getSamplePointer(offset), destBytes, _descriptor.channels, numFrames);
         } 
  
 		/** 
@@ -847,7 +850,7 @@ package com.noteflight.standingwave3.elements
          */ 
         public function readWavBytes(srcBytes:ByteArray, bitDepth:int, channels:int, numFrames:Number):void 
         {
-        	Sample._awave.readWavBytes(getSamplePointer(), srcBytes, bitDepth, channels, Math.floor(numFrames) );
+        	_awave.readWavBytes(getSamplePointer(), srcBytes, bitDepth, channels, Math.floor(numFrames) );
         } 
         
         /** 
@@ -860,7 +863,7 @@ package com.noteflight.standingwave3.elements
         	if (numFrames < 0) {
         		numFrames = _frames; // if unspecified, write the whole sample
         	}
-        	Sample._awave.writeWavBytes(getSamplePointer(offset), destBytes, _descriptor.channels, Math.floor(numFrames));
+        	_awave.writeWavBytes(getSamplePointer(offset), destBytes, _descriptor.channels, Math.floor(numFrames));
         }   
           
         /**
@@ -872,7 +875,7 @@ package com.noteflight.standingwave3.elements
         	if (_awaveMemoryinvalid) {
         		commitChannelData();
         	}
-        	Sample._awave.copy(getSamplePointer(), source.getSamplePointer(),
+        	_awave.copy(getSamplePointer(), source.getSamplePointer(),
         		 _descriptor.channels, _frames, type);
         	invalidateChannelData();
         }  
@@ -885,7 +888,7 @@ package com.noteflight.standingwave3.elements
         	if (_awaveMemoryinvalid) {
         		commitChannelData();
         	}
-        	Sample._awave.overdrive(getSamplePointer(), _descriptor.channels, _frames);
+        	_awave.overdrive(getSamplePointer(), _descriptor.channels, _frames);
         	invalidateChannelData();
         }    
        
@@ -908,6 +911,7 @@ package com.noteflight.standingwave3.elements
         {
         	// Offer the sample memory to the memory pool
         	// If the pool doesn't want it, it'll be free'd
+
         	_pool.release(_samplePointer, _frames * _descriptor.channels);
         	_samplePointer = 0; // null pointer
         	for (var c:Number = 0; c < channels; c++) {
@@ -985,11 +989,13 @@ package com.noteflight.standingwave3.elements
 					pool[len].push(pointer);
 					// And zero it out, only if we have to when fetch
 					// awave.setSamples(pointer, 1, len, 0.0);
+					//trace("adding to pool");
 					return;
 				}
 			}
 			// Either it's not a size we're pooling, or we have enough of those.
 			// So we'll just free the memory
+			//trace("deallocating");
 			awave.deallocateSampleMemory(pointer);
 		}
 	}

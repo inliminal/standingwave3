@@ -176,9 +176,13 @@ package com.noteflight.standingwave3.generators
 		 * to free the sample memory.
 		 */
 		override public function destroy():void {
-			_attackTable.destroy();
-			_decayTable.destroy();
-			_releaseTable.destroy();
+			
+			if (_attackTable)
+			{
+				_attackTable.destroy();
+				_decayTable.destroy();
+				_releaseTable.destroy();
+			}
 			_sample.destroy();
 			_sample = null;
 		}

@@ -32,6 +32,7 @@ package com.noteflight.standingwave3.performance
     {
     	/** Fixed gain factor to apply to all sources while mixing into the output buss */
     	public var mixGain:Number = 0.0;
+        public var sample:Sample;
     	
         private var _performance:IPerformance;
         private var _position:Number = 0;
@@ -53,6 +54,18 @@ package com.noteflight.standingwave3.performance
             _descriptor = descriptor;
             resetPosition();
         }
+		
+		public function destroy():void
+		{
+			if (sample)
+			{
+				sample.destroy();
+				sample = null;
+				_performance = null;
+				_activeElements = null;
+				trace("destroy");
+			}
+		}
         
         /**
          * The total duration of this performance.  The duration may be decreased from its default
@@ -107,8 +120,7 @@ package com.noteflight.standingwave3.performance
             _position = 0;
             _activeElements = new Vector.<PerformableAudioSource>();
         }
-        
-        
+
         
         /**
          * @inheritDoc
@@ -118,11 +130,15 @@ package com.noteflight.standingwave3.performance
         	
             // create our result sample and zero its samples out so we can add in the
             // audio from performance events that intersect our time interval.
-            var sample:Sample = new Sample(_descriptor, numFrames);
                         
             // Maintain a list of all PerformableAudioSources known to be active at the current
             // audio cursor position.
-            var _stillActive:Vector.<PerformableAudioSource> = new Vector.<PerformableAudioSource>();
+			
+			if (sample)
+				sample.destroy();
+
+			sample = new Sample(_descriptor, numFrames);
+			var _stillActive:Vector.<PerformableAudioSource> = new Vector.<PerformableAudioSource>();
             
             var element:PerformableAudioSource;
             var i:Number;
@@ -143,7 +159,6 @@ package com.noteflight.standingwave3.performance
             // into our result sample, and retaining them in the next copy of the active list
             // if they continue past this time window.
             //
-            
             
             for each (element in _activeElements)
             {
@@ -197,6 +212,7 @@ package com.noteflight.standingwave3.performance
 	                	elementSample = element.source.getSample(activeLength);
 	                	sample.mixInPan(elementSample, gains.left, gains.right, activeOffset);
 	                	elementSample.destroy();
+						elementSample = null;
 	                }	
 	          	} else {
 	          		throw new Error("Cannot mix sources with incompatible AudioDescriptors.");
@@ -215,7 +231,8 @@ package com.noteflight.standingwave3.performance
 	                	elementSample = element.source.getSample(activeLength);
 	                	sample.mixIn(elementSample, fgain, activeOffset);
 	                	elementSample.destroy();
-	                }	
+						elementSample = null;
+					}	
 	      		} else {
 	      			throw new Error("Cannot mix sources with incompatible AudioDescriptors.");
 	      		}

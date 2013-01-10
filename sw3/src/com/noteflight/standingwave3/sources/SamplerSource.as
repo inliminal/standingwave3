@@ -43,7 +43,7 @@ package com.noteflight.standingwave3.sources
         
         
         /** 
-         * LoopSource extends a sample indefinitely by looping a section.
+         * SamplerSource extends a sample indefinitely by looping a section.
          * The source of a loop is always a SoundGenerator.
          */
         public function SamplerSource(ad:AudioDescriptor, soundGenerator:IDirectAccessSource)
@@ -53,9 +53,13 @@ package com.noteflight.standingwave3.sources
             this._position = 0;
             this.frequencyShift = 1;
             this._phase = 0;
-            this.pitchModulations = new Array();
-            this._realizedModulations = new Array();
-            this._pitchModulationData = new LineData();
+			
+			if (!this.pitchModulations)
+			{
+				this.pitchModulations = new Array();
+				this._realizedModulations = new Array();
+				this._pitchModulationData = new LineData();
+			}
         }
         
         override public function resetPosition():void 
@@ -175,7 +179,6 @@ package com.noteflight.standingwave3.sources
 			rslt._realizedModulations = _realizedModulations;
 			rslt._pitchModulationData = _pitchModulationData;
             return rslt;
-        }
-        
+        }   
     }
 }

@@ -106,7 +106,10 @@ package com.noteflight.standingwave3.utils
          */
         public static function toRandomAccessSource(source:IAudioSource):IRandomAccessSource
         {
-            return (source is IRandomAccessSource) ? IRandomAccessSource(source) : new CacheFilter(source);
+			if (source is IRandomAccessSource)
+				return IRandomAccessSource(source);
+			else
+				return new CacheFilter(source);
         }
     }
 }

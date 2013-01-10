@@ -55,6 +55,12 @@ package com.noteflight.standingwave3.filters
             this.factor = factor;
             this.source = source;
         }
+		
+		public function destroy():void
+		{
+			if (!_sourceCache is IRandomAccessSource)
+				CacheFilter(_sourceCache).destroy();
+		}
         
         /**
          * The underlying audio source for this filter. 
@@ -110,7 +116,7 @@ package com.noteflight.standingwave3.filters
             var srcStart:Number;
             var srcEnd:Number;
             var numFrames:Number = toOffset - fromOffset;
-            
+			
             if (factor == 1) {
             	// optimize the trivial case
             	return _sourceCache.getSampleRange(fromOffset, toOffset);
