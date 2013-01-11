@@ -15,19 +15,17 @@
 
 package com.noteflight.standingwave3.output
 {
-    import com.noteflight.standingwave3.elements.IAudioSource;
-	import flash.utils.ByteArray;
-	import flash.utils.Endian;
+	import com.noteflight.standingwave3.elements.IAudioSource;
+	import com.zutalor.utils.MasterClock;
+	import flash.events.Event;
+	import flash.events.EventDispatcher;
+	import flash.events.ProgressEvent;
+	import flash.events.SampleDataEvent;
+	import flash.events.TimerEvent;
+	import flash.media.Sound;
+	import flash.media.SoundChannel;
+	import flash.media.SoundTransform;
     
-    import flash.events.Event;
-    import flash.events.EventDispatcher;
-    import flash.events.ProgressEvent;
-    import flash.events.SampleDataEvent;
-    import flash.events.TimerEvent;
-    import flash.media.Sound;
-    import flash.media.SoundChannel;
-    import flash.media.SoundTransform;
-    import flash.utils.Timer;
     
     /** Dispatched when the currently playing sound has completed. */
     [Event(type="flash.events.Event",name="complete")]
@@ -38,9 +36,9 @@ package com.noteflight.standingwave3.output
      * and continues streaming the output until it is stopped, or until there is no more
      * audio output obtainable from the IAudioSource.
      */
+	 
     public class AudioPlayer extends EventDispatcher
     {
-		
 		public var preset:String;
 
         // The sound being output
@@ -63,8 +61,7 @@ package com.noteflight.standingwave3.output
         public function AudioPlayer(framesPerCallback:Number = 4096)
         {
 			_sound = new Sound();
-            _sampleHandler = new AudioSampleHandler(framesPerCallback); 
-            _sampleHandler.addEventListener(Event.SOUND_COMPLETE, handleComplete);
+		   _sampleHandler = new AudioSampleHandler(framesPerCallback); 
            // _progressTimer.addEventListener(TimerEvent.TIMER, handleProgressTimer);
         }
         
@@ -75,6 +72,7 @@ package com.noteflight.standingwave3.output
         public function play(source:IAudioSource):void
         {
             stop();
+			 _sampleHandler.addEventListener(Event.SOUND_COMPLETE, handleComplete);
             if (source.descriptor.channels == 2 && source.descriptor.rate == 44100) {
             	_sampleHandler.source = source;
             	_sampleHandler.sourceStarted = false;
@@ -94,8 +92,8 @@ package com.noteflight.standingwave3.output
         {
             if (source == null || source == _sampleHandler.source)
             {
-                _sampleHandler.source = null;
-                _sampleHandler.channel = null;
+				_sampleHandler.source = null;
+				_sampleHandler.channel = null;
                 if (_channel)
                 {
                     // We don't need to tell the channel to stop: the next
@@ -116,7 +114,7 @@ package com.noteflight.standingwave3.output
                   /*This fixes an annoying bug. If you start and start the sample source again
                   you will notice that the sound plays in multiple speed dependet on how often you started the same source again.
                   It`s a bug! You have to remove the handler for sample data when erasing the _sound object. In general this also prevents memory leaking. */
-                  _sound.removeEventListener(SampleDataEvent.SAMPLE_DATA, handleSampleData);
+                  _sound.removeEventListener(SampleDataEvent.SAMPLE_DATA, _sampleHandler.handleSampleData);
                 }
             }
         }
@@ -142,7 +140,7 @@ package com.noteflight.standingwave3.output
          */
         private function startSound():void
         {
-            _sound.addEventListener(SampleDataEvent.SAMPLE_DATA, handleSampleData);
+            _sound.addEventListener(SampleDataEvent.SAMPLE_DATA, _sampleHandler.handleSampleData);
             _channel = _sound.play();
             _sampleHandler.channel = _channel;
            // _progressTimer.start();
@@ -167,27 +165,7 @@ package com.noteflight.standingwave3.output
         /**
          * Handle a SampleDataEvent by passing it to the AudioSampleHandler delegate.
          */
-        private function handleSampleData(e:SampleDataEvent):void
-        {
-			var pos:int;
-			var bytes:ByteArray;
-			
-			trace("h");
-			
-			if (e.data.length)
-			{
-				bytes = new ByteArray();
-				bytes.writeBytes(e.data);
-				bytes.position = 0;
-				bytes.endian = Endian.LITTLE_ENDIAN;
-			}
-			else
-				bytes = e.data;
-				
-			pos = e.position;
-			_sampleHandler.handleSampleData(pos, bytes);
-        }
-        
+
         private function handleProgressTimer(e:TimerEvent):void
         {
             dispatchEvent(new ProgressEvent("progress"));
@@ -198,7 +176,13 @@ package com.noteflight.standingwave3.output
          */
         private function handleComplete(e:Event):void
         {
-			dispatchEvent(e);
+			MasterClock.callOnce(onStop, 1000);
+			
+			function onStop():void
+			{
+				stop();
+				dispatchEvent(e);
+			}	
            // _progressTimer.stop();
         }
  

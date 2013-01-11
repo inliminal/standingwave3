@@ -128,14 +128,14 @@ package com.noteflight.standingwave3.output
         /**
          * Handle a request by the player for a block of samples. 
          */
-        public function handleSampleData(p:int, ba:ByteArray):void
+        public function handleSampleData(e:SampleDataEvent):void
         {
             var now:Number = getTimer();
 
             // Determine latency based on skew between channel position and sample request position.
             if (_channel && position > 0 && _latencyCount < LATENCY_MAX_COUNT)
             {
-                _totalLatency += (p / AudioDescriptor.RATE_44100) - (_channel.position / 1000.0);
+                _totalLatency += (e.position / AudioDescriptor.RATE_44100) - (_channel.position / 1000.0);
                 _latencyCount++; 
             }
 			
@@ -147,21 +147,21 @@ package com.noteflight.standingwave3.output
             // frame number at which its rendering is beginning.
             if (!_sourceStarted)
             {
-                _startFrame = p;
+                _startFrame = e.position;
                 _sourceStarted = true;
                 cpuPercentage = 0;
             }
             
             // Determine the frame at which we should start getting samples from the source.
             var frame:Number;
-            frame = p - _startFrame;
+            frame = e.position - _startFrame;
             
             if (_source != null)
             { 
                 // We have a live source to work with.
                 if (frame > _source.position) {
                 	// We've been dropping frames. Keep track of how far off we are.
-                	_deadFrames = p - _source.position;
+                	_deadFrames = e.position - _source.position;
                 	// trace("Dead frames at " + frame + " = " + _deadFrames);
                 } else {
                 	// trace("Healthy handler at " + frame);
@@ -197,16 +197,16 @@ package com.noteflight.standingwave3.output
 				}
 				
 				// Read the sample data to the ByteArray provided by the handler, and then clean up
-				sample.writeBytes(ba, 0, length);    
+				sample.writeBytes(e.data, 0, length); //TODO writeBytes maybe the source of the memory leak.
+														// Potentially in the C Function that references the byte array in e.data
 				sample.destroy();
    			} 
              
             if (length <= 0) 
             {
-                _source = null;
-                _sourceStarted = false;
-				ba = null;
-               dispatchEvent(new Event(Event.SOUND_COMPLETE)); // Event.SOUND_COMPLETE
+				_source = null;
+				_sourceStarted = false;
+				dispatchEvent(new Event(Event.SOUND_COMPLETE)); // Event.SOUND_COMPLETE
             }
             else if (length > 0 && length < framesPerCallback)
             {
@@ -214,19 +214,14 @@ package com.noteflight.standingwave3.output
                 // Avoid Flash buffer underrun anger 
                 for (var i:int = length; i < framesPerCallback; i++)
                 {
-                    ba.writeFloat(0);
-                    ba.writeFloat(0);
+                    e.data.writeFloat(0);
+                    e.data.writeFloat(0);
                 }
 				_source = null;
-                _sourceStarted = false;
-				ba = null;
+				_sourceStarted = false;
                 dispatchEvent(new Event(Event.SOUND_COMPLETE)); // Event.SOUND_COMPLETE
             }
-
-            // Calculate CPU utilization
-			
             calculateCpu(now);
-            
         }
 
         private function calculateCpu(now:Number):void

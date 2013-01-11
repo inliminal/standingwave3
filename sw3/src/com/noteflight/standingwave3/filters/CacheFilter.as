@@ -233,6 +233,7 @@ package com.noteflight.standingwave3.filters
         * up its sample memory.
         */
         public function destroy():void {
+			trace("cache destroy.");
         	_cache.destroy();
         	_cache = null;
         }

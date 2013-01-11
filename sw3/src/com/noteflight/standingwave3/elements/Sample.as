@@ -101,10 +101,7 @@ package com.noteflight.standingwave3.elements
               this._samplePointer = allocateSampleMemory(numFrames, descriptor.channels, zero);
             }
 
-            _position = 0; 
-            
-           
-            
+            _position = 0;
         }
 
         public static function allocateSampleMemory(numFrames:Number, channels:Number, zero:Boolean = false):uint {
@@ -593,7 +590,7 @@ package com.noteflight.standingwave3.elements
        	 */    
        	public function wavetableInDirectAccessSource(table:IDirectAccessSource, tableSize:int, 
        	    initialPhase:Number, phaseAdd:Number, phaseReset:Number, 
-       	    targetOffset:Number, numFrames:Number, pitchMod:Mod = null):Number 
+       	    targetOffset:Number, numFrames:Number, pitchMod:Mod = null):Number
        	{
        		var thisSamplePointer:uint; 
         	var tableSamplePointer:uint;
@@ -616,7 +613,6 @@ package com.noteflight.standingwave3.elements
         	// Double phase positions for stereo wavetables
         	// This should be moved into alchemy, I think.
         	tableSize *= _descriptor.channels;
-        	
         	
 			thisSamplePointer = getSamplePointer(targetOffset); // gen to this position
 			tableSamplePointer = table.getSamplePointer(); // gen from this position
@@ -832,6 +828,9 @@ package com.noteflight.standingwave3.elements
          * @param outputBytes the output ByteArray
          * @param offset the 
          */ 
+		
+		public var count:int;
+		
         public function writeBytes(destBytes:ByteArray, offset:Number=0, numFrames:Number=-1):void 
         {
         	var bytes:ByteArray;
@@ -843,6 +842,9 @@ package com.noteflight.standingwave3.elements
 			// If we just adjust its littleEndianess, then we can use the Clib func to bang all the bytes in fast
 			destBytes.endian = "littleEndian";
 			_awave.writeBytes(getSamplePointer(offset), destBytes, _descriptor.channels, numFrames);
+			
+			//if (count++ == 10)
+			//destBytes.clear();
         } 
  
 		/** 
