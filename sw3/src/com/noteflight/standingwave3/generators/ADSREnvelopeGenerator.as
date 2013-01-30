@@ -178,11 +178,14 @@ package com.noteflight.standingwave3.generators
 		override public function destroy():void {
 			
 			if (_attackTable)
-			{
 				_attackTable.destroy();
+				
+			if (_decayTable)	
 				_decayTable.destroy();
+				
+			if (_releaseTable)
 				_releaseTable.destroy();
-			}
+
 			_sample.destroy();
 			_sample = null;
 		}
