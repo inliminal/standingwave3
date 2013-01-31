@@ -176,7 +176,7 @@ package com.noteflight.standingwave3.output
          */
         private function handleComplete(e:Event):void
         {
-			MasterClock.callOnce(onStop, 5000);
+			MasterClock.callOnce(onStop, 2000);
 			
 			function onStop():void
 			{
