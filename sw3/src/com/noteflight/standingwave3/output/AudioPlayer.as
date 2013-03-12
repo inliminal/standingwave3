@@ -2,7 +2,7 @@
 //
 //  NOTEFLIGHT LLC
 //  Copyright 2009 Noteflight LLC
-// 
+//
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 //  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 //  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,46 +25,46 @@ package com.noteflight.standingwave3.output
 	import flash.media.Sound;
 	import flash.media.SoundChannel;
 	import flash.media.SoundTransform;
-    
-    
+
+
     /** Dispatched when the currently playing sound has completed. */
     [Event(type="flash.events.Event",name="complete")]
-    
+
     /**
      * An AudioPlayer streams samples from an IAudioSource to a Sound object using a
      * SampleDataEvent listener.  It does so using a preset number of frames per callback,
      * and continues streaming the output until it is stopped, or until there is no more
      * audio output obtainable from the IAudioSource.
      */
-	 
+	
     public class AudioPlayer extends EventDispatcher
     {
 		public var preset:String;
 
         // The sound being output
         private var _sound:Sound;
-        
+
         // The SoundChannel that the output is playing through
         private var _channel:SoundChannel;
- 
+
         // The delegate that handles the actual provision of the samples
         private var _sampleHandler:AudioSampleHandler;
-        
+
         private static const PROGRESS_INTERVAL:Number = 1000 / 15;
        // private var _progressTimer:Timer = new Timer(PROGRESS_INTERVAL);
-		 
+		
         /**
-         * Construct a new AudioPlayer instance. 
+         * Construct a new AudioPlayer instance.
          * @param framesPerCallback the number of frames that this AudioPlayer will
          * obtain for playback on each SampleDataEvent emitted by the playback Sound object.
          */
-        public function AudioPlayer(framesPerCallback:Number = 4096)
+        public function AudioPlayer(framesPerCallback:Number = 8192)
         {
 			_sound = new Sound();
-		   _sampleHandler = new AudioSampleHandler(framesPerCallback); 
+		   _sampleHandler = new AudioSampleHandler(framesPerCallback);
            // _progressTimer.addEventListener(TimerEvent.TIMER, handleProgressTimer);
         }
-        
+
         /**
          * Play an audio source through this output.  Only one source may be played at a time.
          * @param source an IAudioSource instance
@@ -81,11 +81,11 @@ package com.noteflight.standingwave3.output
             	throw new Error("AudioPlayer no longer supports lower audio descriptors. Please pass the source through the StandardizeFilter() before output.");
             }
         }
-        
+
         /**
          * Stop a given source (if supplied), or stop any source that is playing (if no source
-         * parameter is supplied). 
-         * 
+         * parameter is supplied).
+         *
          * @param source an optional IAudioSource instance
          */
         public function stop(source:IAudioSource = null):void
@@ -101,9 +101,9 @@ package com.noteflight.standingwave3.output
                     // to return no frames, which immediately halts playback.
                     // Stopping the channel here causes a crash, possibly due to
                     // unexpected re-entrancy somewhere in the player FSM.
-                    // 
+                    //
                     // _channel.stop();
-                    
+
    					// A more elegant solution is to mute the channel immediately,
    					//  and then null the channel so that it returns nothing next event
                     _channel.soundTransform = new SoundTransform(0);
@@ -118,7 +118,7 @@ package com.noteflight.standingwave3.output
                 }
             }
         }
-        
+
         /**
          * The source currently being played by this object, or null if there is none.
          */
@@ -126,7 +126,7 @@ package com.noteflight.standingwave3.output
         {
             return _sampleHandler.source;
         }
-        
+
         /**
          * The SoundChannel currently employed for playback, or null if there is none.
          */
@@ -136,7 +136,7 @@ package com.noteflight.standingwave3.output
         }
 
         /**
-         * Begin continuous sample block generation. 
+         * Begin continuous sample block generation.
          */
         private function startSound():void
         {
@@ -145,8 +145,8 @@ package com.noteflight.standingwave3.output
             _sampleHandler.channel = _channel;
            // _progressTimer.start();
         }
-        
-		public function pause():void 
+
+		public function pause():void
 		{
 			if (_sampleHandler)
 			{
@@ -154,7 +154,7 @@ package com.noteflight.standingwave3.output
 			}
 		}
 		
-		public function resume():void 
+		public function resume():void
 		{
 			if (_sampleHandler)
 			{
@@ -170,24 +170,24 @@ package com.noteflight.standingwave3.output
         {
             dispatchEvent(new ProgressEvent("progress"));
         }
-        
+
         /**
          * Handle completion of our sample handler by forwarding the event to anyone listening to us.
          */
         private function handleComplete(e:Event):void
         {
-			MasterClock.callOnce(onStop, 2000);
+			MasterClock.callOnce(onStop, 1000);
 			
 			function onStop():void
 			{
 				stop();
 				dispatchEvent(e);
-			}	
+			}
            // _progressTimer.stop();
         }
- 
+
         /**
-         * The actual playback position in seconds, relative to the start of the current source. 
+         * The actual playback position in seconds, relative to the start of the current source.
          */
         [Bindable("positionChange")]
         public function get position():Number
@@ -196,7 +196,7 @@ package com.noteflight.standingwave3.output
         }
 
         /**
-         * The estimated percentage of CPU resources being consumed by sound synthesis. 
+         * The estimated percentage of CPU resources being consumed by sound synthesis.
          */
         [Bindable("positionChange")]
         public function get cpuPercentage():Number

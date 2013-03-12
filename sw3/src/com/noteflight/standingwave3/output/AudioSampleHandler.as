@@ -2,7 +2,7 @@
 //
 //  NOTEFLIGHT LLC
 //  Copyright 2009 Noteflight LLC
-// 
+//
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 //  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 //  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -16,17 +16,17 @@
 package com.noteflight.standingwave3.output
 {
     import com.noteflight.standingwave3.elements.*;
-    
+
     import flash.events.Event;
     import flash.events.EventDispatcher;
     import flash.events.SampleDataEvent;
     import flash.media.SoundChannel;
     import flash.utils.ByteArray;
     import flash.utils.getTimer;
- 
+
     /** Dispatched when the currently playing sound has completed. */
     [Event(type="flash.events.Event",name="soundComplete")]
-    
+
     /**
      * A delegate object that takes care of the work for audio playback by moving data
      * from an IAudioSource into a SampleDataEvent's ByteArray.
@@ -38,23 +38,23 @@ package com.noteflight.standingwave3.output
 
         /** frames supplied for each SampleDataEvent */
         public var framesPerCallback:Number;
-        
+
         /** Overall gain factor for output. Deprecated. */
         public var gainFactor:Number = 1.0;
-        
+
         /** The absolute frame number of the sample block at which the current source began playing */
         private var _startFrame:Number = 0;
 
         /** Timer value at conclusion of last sample block calculation, for CPU percentage determination */
         private var _lastSampleTime:Number = 0;
-        
+
         /** Flag indicating that the current source has been examined during a sample data event. */
         private var _sourceStarted:Boolean;
-        
+
         private var _totalLatency:Number = 0;
         private var _latencyCount:Number = 0;
         private var LATENCY_MAX_COUNT:Number = 10;
-        
+
         /** A suck factor to keep track of how far off we are. */
         private var _deadFrames:Number = 0;
 
@@ -64,12 +64,12 @@ package com.noteflight.standingwave3.output
         // The SoundChannel that the output is playing through, really only needed for calculating latency
         private var _channel:SoundChannel;
 
-        // If non-null, the audio source being currently rendered        
+        // If non-null, the audio source being currently rendered
         private var _source:IAudioSource;
 		
 		private var _count:int;
-        
- 
+
+
         public function AudioSampleHandler(framesPerCallback:Number = 4096)
         {
             this.framesPerCallback = framesPerCallback;
@@ -89,7 +89,7 @@ package com.noteflight.standingwave3.output
         {
             _sourceStarted = sourceStarted;
         }
-        
+
         public function set channel(channel:SoundChannel):void
         {
             _channel = channel;
@@ -109,7 +109,7 @@ package com.noteflight.standingwave3.output
         }
 
         /**
-         * The position in seconds relative to the start of the current source, else zero 
+         * The position in seconds relative to the start of the current source, else zero
          */
         public function get position():Number
         {
@@ -122,11 +122,11 @@ package com.noteflight.standingwave3.output
             }
             return 0;
         }
-        
-        
-        
+
+
+
         /**
-         * Handle a request by the player for a block of samples. 
+         * Handle a request by the player for a block of samples.
          */
         public function handleSampleData(e:SampleDataEvent):void
         {
@@ -136,13 +136,13 @@ package com.noteflight.standingwave3.output
             if (_channel && position > 0 && _latencyCount < LATENCY_MAX_COUNT)
             {
                 _totalLatency += (e.position / AudioDescriptor.RATE_44100) - (_channel.position / 1000.0);
-                _latencyCount++; 
+                _latencyCount++;
             }
 			
             var endFrame:Number;
             var sample:Sample;
             var length:Number;
-            
+
             // If the current source has never been seen here before, capture the starting
             // frame number at which its rendering is beginning.
             if (!_sourceStarted)
@@ -151,13 +151,13 @@ package com.noteflight.standingwave3.output
                 _sourceStarted = true;
                 cpuPercentage = 0;
             }
-            
+
             // Determine the frame at which we should start getting samples from the source.
             var frame:Number;
             frame = e.position - _startFrame;
-            
+
             if (_source != null)
-            { 
+            {
                 // We have a live source to work with.
                 if (frame > _source.position) {
                 	// We've been dropping frames. Keep track of how far off we are.
@@ -171,7 +171,7 @@ package com.noteflight.standingwave3.output
                 // to the max that we can return.
                 //
     			length = _source.frameCount - frame;
-                
+
     			if (length > framesPerCallback) {
     				length = framesPerCallback;
     			}
@@ -184,25 +184,25 @@ package com.noteflight.standingwave3.output
                 //
                 length = 0;
             }
-           
+
 			if (length > 0)
-			{	
-				if (paused) 
+			{
+				if (paused)
 				{
 					// Push an empty sample through, if it is paused. This will accrue "dead frames"
 					sample = new Sample(_source.descriptor, length, true);
 				} else {
 					// Get our output Sample.
-					sample = _source.getSample(length);  
+					sample = _source.getSample(length);
 				}
 				
 				// Read the sample data to the ByteArray provided by the handler, and then clean up
-				sample.writeBytes(e.data, 0, length); //TODO writeBytes maybe the source of the memory leak.
+				sample.writeBytes(e.data, 0, length); //TODO writeBytes maybe the source of the memory leak. GP
 														// Potentially in the C Function that references the byte array in e.data
 				sample.destroy();
-   			} 
-             
-            if (length <= 0) 
+   			}
+
+            if (length <= 0)
             {
 				_source = null;
 				_sourceStarted = false;
@@ -210,8 +210,8 @@ package com.noteflight.standingwave3.output
             }
             else if (length > 0 && length < framesPerCallback)
             {
-                // Fill out remainder of sample block if the source could not supply all frames.  
-                // Avoid Flash buffer underrun anger 
+                // Fill out remainder of sample block if the source could not supply all frames.
+                // Avoid Flash buffer underrun anger
                 for (var i:int = length; i < framesPerCallback; i++)
                 {
                     e.data.writeFloat(0);
@@ -238,7 +238,7 @@ package com.noteflight.standingwave3.output
 				if (_channel) {
 					// trace("peak: " + _channel.leftPeak + " / " + _channel.rightPeak);
 					if (_channel.leftPeak > 0.98 || _channel.rightPeak > 0.98) {
-						trace("AUDIO CLIPPING");
+						//trace("AUDIO CLIPPING");
 					}
 				}
             }
